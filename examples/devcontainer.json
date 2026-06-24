@@ -1,0 +1,17 @@
+// Starter .devcontainer/devcontainer.json for a project that uses this base
+// image. Copy it to <your-project>/.devcontainer/devcontainer.json and adjust.
+{
+  "name": "my-project",
+  "image": "ghcr.io/drbild/devcontainer-base:latest",
+  "remoteUser": "vscode",
+  "customizations": {
+    "vscode": {
+      "extensions": ["anthropic.claude-code"],
+      "settings": {
+        "terminal.integrated.defaultProfile.linux": "zsh"
+      }
+    }
+  },
+  // Materialize the tools this project pins in mise.toml / .tool-versions.
+  "postCreateCommand": "mise install"
+}
