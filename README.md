@@ -64,6 +64,22 @@ A copy-pasteable starter lives in [`examples/devcontainer.json`](examples/devcon
 Pin to a timestamped tag (e.g. `ghcr.io/drbild/devcontainer-base:2026-06-23-060500`)
 instead of `latest` for reproducible builds.
 
+## Building locally
+
+A `Makefile` wraps the common local workflows (the `docker` commands underneath
+work directly too):
+
+```sh
+make build    # docker build -t devcontainer-base:local .
+make test     # build, then verify every bundled tool runs
+make shell    # open an interactive zsh in the image as the vscode user
+make help     # list all targets
+```
+
+`make` builds a single-arch image for your host platform — no buildx/QEMU needed.
+The multi-arch build and registry push are handled by CI (see below); `make
+push-multiarch` exists for the rare case you need to do it by hand.
+
 ## Publishing
 
 `.github/workflows/build-image.yml` builds and pushes to `ghcr.io` on:
