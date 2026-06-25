@@ -1,0 +1,53 @@
+#!/usr/bin/env bash
+# mise-install-all — run `mise install` in every directory at or below the
+# current directory (CWD by default) that pins tools with mise.
+#
+# Intended for monorepos mounted into a devcontainer: a single invocation
+# materializes the tools for every project that ships a mise.toml /
+# .mise.toml / .tool-versions, so you don't have to `cd` into each one by
+# hand (e.g. from a postCreateCommand).
+#
+# Usage: mise-install-all [ROOT]   (ROOT defaults to the current directory)
+#
+# .git and node_modules are pruned. Every project is attempted; the exit code
+# is non-zero if any `mise install` failed.
+
+set -euo pipefail
+
+root=${1:-.}
+
+# Config filenames that mark a directory as pinning tools with mise.
+configs=(mise.toml .mise.toml .tool-versions)
+
+# Build a find name-expression matching any of the config filenames:
+#   -name mise.toml -o -name .mise.toml -o -name .tool-versions
+name_expr=()
+for c in "${configs[@]}"; do
+  name_expr+=(-name "$c" -o)
+done
+unset 'name_expr[${#name_expr[@]}-1]'  # drop the trailing -o
+
+# Collect the directories that contain a config file, deduped and sorted.
+mapfile -t dirs < <(
+  find "$root" \
+    \( -name .git -o -name node_modules \) -prune -o \
+    -type f \( "${name_expr[@]}" \) -print \
+  | xargs -r -n1 dirname \
+  | sort -u
+)
+
+if [ ${#dirs[@]} -eq 0 ]; then
+  echo "mise-install-all: no mise.toml / .mise.toml / .tool-versions found under $root"
+  exit 0
+fi
+
+rc=0
+for d in "${dirs[@]}"; do
+  echo "==> mise install ($d)"
+  if ! (cd "$d" && mise install); then
+    echo "mise-install-all: install failed in $d" >&2
+    rc=1
+  fi
+done
+
+exit $rc

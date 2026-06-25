@@ -46,6 +46,20 @@ mise install      # materialize the tools pinned in mise.toml / .tool-versions
 node --version    # resolves via the mise shim to the pinned version
 ```
 
+### Monorepos: `mise-install-all`
+
+For a monorepo with many pinned projects, the image bundles `mise-install-all`,
+which runs `mise install` in every directory at or below the current one that
+has a `mise.toml`, `.mise.toml`, or `.tool-versions` (`.git` and `node_modules`
+are skipped). Point a consumer's `postCreateCommand` at it to install
+everything in one shot:
+
+```jsonc
+{
+  "postCreateCommand": "mise-install-all"
+}
+```
+
 ## Usage
 
 Reference the image directly from a project's `.devcontainer/devcontainer.json`:

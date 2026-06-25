@@ -44,6 +44,10 @@ RUN curl -fsSL https://mise.run | MISE_INSTALL_PATH=/usr/local/bin/mise sh \
 # native installer drops the `claude` binary.
 ENV PATH=/home/${USERNAME}/.local/bin:/home/${USERNAME}/.local/share/mise/shims:${PATH}
 
+# Convenience wrapper: run `mise install` in every project under the CWD.
+# Handy from a consumer's postCreateCommand when a whole monorepo is mounted in.
+COPY --chmod=0755 scripts/mise-install-all /usr/local/bin/mise-install-all
+
 # Quality-of-life: orientation flag + sane shell/editor defaults.
 ENV DEVCONTAINER=true \
     SHELL=/bin/zsh
