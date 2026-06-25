@@ -57,5 +57,16 @@ ENV DEVCONTAINER=true \
 # /home/${USERNAME}/.local/bin (already added to PATH above). Installs the
 # latest release; the weekly scheduled rebuild keeps it current.
 USER ${USERNAME}
+# Pre-create mise's XDG directories owned by the non-root user. mise creates
+# these lazily (each only when first written to), so a host that bind-mounts
+# into a not-yet-created subdir — e.g. microsandbox mounting host volumes —
+# would otherwise create the parent as root. Creating them up front (as the
+# user, so intermediate parents are user-owned too) guarantees ${USERNAME}
+# ownership regardless of mount order.
+RUN mkdir -p \
+      /home/${USERNAME}/.config/mise \
+      /home/${USERNAME}/.cache/mise \
+      /home/${USERNAME}/.local/state/mise \
+      /home/${USERNAME}/.local/share/mise
 RUN curl -fsSL https://claude.ai/install.sh | bash
 USER root
