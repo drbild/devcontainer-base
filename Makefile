@@ -6,7 +6,7 @@ TAG   ?= local
 REF   := $(IMAGE):$(TAG)
 
 # Tools the image is expected to provide, smoke-tested by `make test`.
-TOOLS := git zsh gh mise claude
+TOOLS := git zsh gh mise claude docker
 
 .DEFAULT_GOAL := build
 
@@ -22,6 +22,15 @@ test: build
 		echo "==> $$t --version"; \
 		docker run --rm -u vscode $(REF) $$t --version || exit 1; \
 	done
+	@echo "==> docker compose version"
+	@docker run --rm -u vscode $(REF) docker compose version
+	@echo "==> docker support wiring"
+	@docker run --rm $(REF) sh -c '\
+		test -x /sbin/init \
+		&& id -nG vscode | grep -qw docker \
+		&& grep -q fuse-overlayfs /etc/docker/daemon.json \
+		&& test -L /etc/systemd/system/sockets.target.wants/docker.socket \
+		&& test ! -e /etc/systemd/system/multi-user.target.wants/docker.service'
 	@echo "All tools OK."
 
 ## shell: Open an interactive zsh in the image as the vscode user.

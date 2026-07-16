@@ -62,6 +62,14 @@ jobs:
           run gh --version
           run mise --version
           run claude --version
+          run docker --version
+          run docker compose version
+          docker run --rm devcontainer-base:test sh -c '
+            test -x /sbin/init &&
+            id -nG vscode | grep -qw docker &&
+            grep -q fuse-overlayfs /etc/docker/daemon.json &&
+            test -L /etc/systemd/system/sockets.target.wants/docker.socket &&
+            test ! -e /etc/systemd/system/multi-user.target.wants/docker.service'
 
       # Push the real multi-arch image (amd64 + arm64 for Apple Silicon hosts).
       - name: Build and push

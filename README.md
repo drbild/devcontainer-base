@@ -18,10 +18,37 @@ want in every project:
 | **gh** | official apt repo | GitHub CLI |
 | **claude** | native installer | [Claude Code], no Node.js required |
 | **mise** | [mise.run] | tool manager, **shims mode** |
+| **docker** | Ubuntu apt (`docker.io`) | with compose v2 plugin, socket-activated under systemd |
+| **systemd** | Ubuntu apt | real init for microVM guests booted with an init handoff (e.g. msb `--init auto`) |
 
 Per-project tools (node, go, python, bun, …) are intentionally **not** baked in.
 Projects pin them in a `mise.toml` / `.tool-versions` and install them with
 `mise install`.
+
+## Docker-in-the-guest
+
+The image is set up so Docker "just works" when it boots as a microVM guest
+with systemd as PID 1 (e.g. `msb run --init auto`):
+
+- **systemd + systemd-sysv** provide `/sbin/init`, so an init handoff finds a
+  real init and the stock `docker.io` units manage the daemons.
+- **Socket activation only**: `docker.socket` is enabled, `docker.service` and
+  `containerd.service` are not. dockerd stays cold until the first `docker`
+  command touches `/var/run/docker.sock`, so sandboxes that never use Docker
+  pay no daemon RAM.
+- **`fuse-overlayfs` storage driver** (via `/etc/docker/daemon.json`): guest
+  rootfs images are often themselves an overlayfs upper layer, and the kernel
+  forbids nesting overlayfs upperdirs, so Docker's native overlay driver
+  cannot work there.
+- **compose v2** is installed system-wide (`docker-compose-v2` →
+  `/usr/libexec/docker/cli-plugins`), not per-user, so it survives guest
+  upper-layer wipes.
+- **`vscode` is in the `docker` group**, matching the socket's `root:docker
+  0660` permissions.
+
+Under a plain container runtime (VS Code devcontainer, `docker run`), none of
+this activates — systemd isn't PID 1 and the units never start; the extra
+packages are inert.
 
 ## Why this base?
 
